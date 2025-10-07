@@ -1090,6 +1090,46 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 
 //==========================================================================
 //
+// S_SetSoundPosition
+//
+//==========================================================================
+
+void SoundEngine::SetSoundPosition(int sourcetype, const void *source, int channel, unsigned int position, FSoundID sound_id)
+{
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (chan->SourceType == sourcetype &&
+			chan->Source == source &&
+			(sound_id == INVALID_SOUND? (chan->EntChannel == channel) : (chan->OrgID == sound_id)))
+		{
+			GSnd->SetPosition(chan, position);
+		}
+	}
+	return;
+}
+
+//==========================================================================
+//
+// S_GetSoundPosition
+//
+//==========================================================================
+
+unsigned int SoundEngine::GetSoundPosition(int sourcetype, const void *source, int channel, FSoundID sound_id)
+{
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (chan->SourceType == sourcetype &&
+			chan->Source == source &&
+			(sound_id == INVALID_SOUND? (chan->EntChannel == channel) : (chan->OrgID == sound_id)))
+		{
+			return GSnd->GetPosition(chan);
+		}
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // S_GetSoundPlayingInfo
 //
 // Is a sound being played by a specific emitter?

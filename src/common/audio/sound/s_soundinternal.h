@@ -297,6 +297,8 @@ public:
 	void RelinkSound(int sourcetype, const void* from, const void* to, const FVector3* optpos);
 	void ChangeSoundVolume(int sourcetype, const void* source, int channel, double dvolume);
 	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch, FSoundID sound_id = INVALID_SOUND);
+	void SetSoundPosition(int sourcetype, const void* source, int channel, unsigned int position, FSoundID sound_id = INVALID_SOUND);
+	unsigned int GetSoundPosition(int sourcetype, const void* source, int channel, FSoundID sound_id = INVALID_SOUND);
 	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, FSoundID sound_id = INVALID_SOUND);
 
 	// Stop and resume music, during game PAUSE.
