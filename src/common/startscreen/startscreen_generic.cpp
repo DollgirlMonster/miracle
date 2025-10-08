@@ -106,7 +106,7 @@ bool FGenericStartScreen::DoProgress(int advance)
 
 	if (CurPos < MaxPos)
 	{
-		RgbQuad bcolor = { 177, 77, 16, 255 }; // [Nash June 2025] don't merge this color into VKDoom! // todo: make configurable 
+		RgbQuad bcolor = { 255, 105, 180, 255 }; // [Nash June 2025] don't merge this color into VKDoom! // todo: make configurable 
 		int numnotches = 200 * 2;
 		notch_pos = ((CurPos + 1) * numnotches) / MaxPos;
 		if (notch_pos != NotchPos)
