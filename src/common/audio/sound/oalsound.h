@@ -60,6 +60,9 @@ public:
 	// Returns position of sound on this channel, in samples.
 	virtual unsigned int GetPosition(FISoundChannel *chan);
 
+	// Sets position of sound on this channel, in samples.
+	virtual void SetPosition(FISoundChannel *chan, unsigned int pos);
+
 	// Synchronizes following sound startups.
 	virtual void Sync(bool sync);
 
