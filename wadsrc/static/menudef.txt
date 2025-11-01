@@ -369,6 +369,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptions"
 	Submenu "$OPTMNU_NETWORK",			"NetworkOptions"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
+	Submenu "$OPTMNU_ACCESSIBILITY",	"AccessibilityOptions"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
@@ -817,7 +818,7 @@ OptionMenu "JoystickOptionsDefaults" protected
 	Title "$JOYMNU_OPTIONS"
 	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
 	Option "$JOYMNU_NOMENU", "m_blockcontrollers", "YesNo"
-	ScaleSlider "$JOYMNU_HAPTICS", "haptics_strength", 0, 10, 1, "$OPTVAL_OFF", 0, "m_simpleoptions_view", 0, 1
+	ScaleSlider "$JOYMNU_HAPTICS", "haptics_strength", 0, 10, 1, "$OPTVAL_OFF", 0, "m_simpleoptions_view", 0, Hide
 	IfOption(Windows)
 	{
 		Option "$JOYMNU_DINPUT", "joy_dinput", "YesNo"
@@ -827,6 +828,7 @@ OptionMenu "JoystickOptionsDefaults" protected
 	StaticText ""
 	Slider "$JOYMNU_TURNSPEED",			"cl_analog_sensitivity_yaw", 0, 2.5, 0.1
 	Slider "$JOYMNU_LOOKSPEED",			"cl_analog_sensitivity_pitch", 0, 2.5, 0.1
+	Option "$JOYMNU_ANALOGRUN",			"cl_analog_run", "OnOff"
 	Option "$JOYMNU_ANALOGSTRAFERUN",	"cl_analog_straferun", "OnOff"
 	StaticText ""
 	StaticTextSwitchable "$JOYMNU_NOCON", "$JOYMNU_CONFIG", "ConfigureMessage"
@@ -2020,6 +2022,7 @@ OptionMenu OpenALSoundItems protected
 
 OptionValue MidiDevices
 {
+	// No longer in use but kept around in case some mods use it.
 	// filled in by the sound code
 }
 
@@ -2034,7 +2037,7 @@ OptionMenu SoundOptions protected
 	StaticText " "
 	Slider "$SNDMNU_MENUVOLUME",		"snd_menuvolume", 0, 1, 0.05, 2
 	StaticText " "
-	Option "$SNDMNU_MIDIDEVICE",		"snd_mididevice", "MidiDevices"
+	Submenu "$SNDMNU_MIDIDEVICE",		"MidiDevicesMenu"
 	StaticText " "
 	Option "$SNDMNU_UNDERWATERREVERB",	"snd_waterreverb", "OnOff"
 	Option "$SNDMNU_RANDOMIZEPITCHES",	"snd_pitched", "OnOff"
@@ -2042,6 +2045,12 @@ OptionMenu SoundOptions protected
 	StaticText " "
 	Submenu "$SNDMNU_ADVANCED",			"AdvSoundOptions"
 	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
+}
+
+OptionMenu MidiDevicesMenu protected
+{
+	title "$SNDMNU_MIDIDEVICE"
+	// filled in by the sound code
 }
 
 /*=======================================
@@ -2339,6 +2348,31 @@ OptionMenu ModReplayerOptions protected
 	StaticText ""
 	Option "$ADVSNDMNU_OPNCUSTOMBANK", 	 "opn_use_custom_bank", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPNBANKFILE", "opn_custom_bank", "OPNMIDICustomBanksMenu"
+ }
+ 
+ /*=======================================
+ *
+ * Accessibility Menu
+ *
+ *=======================================*/
+ 
+ OptionMenu AccessibilityOptions protected
+ {
+	Title "$ACCMNU_TITLE"
+	
+	StaticText "$ACCMNU_TOOLTIP"
+	Slider "$ACCMNU_TOOLTIP_LINES", "m_tooltip_lines", 1, 4, 1, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_SPEED", "m_tooltip_speed", 1.0, 5.0, 1.0, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_DELAY", "m_tooltip_delay", 3.0, 15.0, 1.0, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_ALPHA", "m_tooltip_alpha", 0.2, 0.9, 0.05, 2
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Option "$ACCMNU_TOOLTIP_CAP", "m_tooltip_capwidth", "OnOff"
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Option "$ACCMNU_TOOLIP_SCALE", "m_tooltip_small", "OffOn"
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
  }
 
 /*=======================================
