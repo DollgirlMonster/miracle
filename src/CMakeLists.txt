@@ -317,7 +317,7 @@ option(BUILD_FLATPAK "Enable Flatpak-specific build options" OFF)
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
-	COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/tools/updaterevision/UpdateRevision.cmake" src/gitinfo.h
+	COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/tools/updaterevision/UpdateRevision.cmake" "${CMAKE_SOURCE_DIR}/src/gitinfo.h"
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
