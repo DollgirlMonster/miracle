@@ -1,0 +1,10 @@
+// Example shader definition for previous frame effects
+// This demonstrates how to use the previousframe texture
+
+hardwareshader postprocess scene
+{
+	Name "PreviousFrameExample"
+	Shader "shaders/pp/previousframe_example.fp" 330
+	Texture PreviousFrame "previousframe"
+	Uniform float BlendAmount = 0.5
+}
