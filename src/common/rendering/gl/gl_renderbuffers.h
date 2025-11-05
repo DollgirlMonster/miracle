@@ -118,6 +118,8 @@ public:
 	void BindCurrentFB();
 	void BindNextFB();
 	void NextTexture();
+	void BindPreviousTexture(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE);
+	void SaveCurrentAsPrevious();
 
 	PPGLFrameBuffer GetCurrentFB() const { return mPipelineFB[mCurrentPipelineTexture]; }
 
@@ -191,6 +193,9 @@ private:
 	// Effect/HUD buffers
 	PPGLTexture mPipelineTexture[NumPipelineTextures];
 	PPGLFrameBuffer mPipelineFB[NumPipelineTextures];
+
+	// Previous frame texture for feedback effects
+	PPGLTexture mPreviousFrameTexture;
 
 	// Eye buffers
 	TArray<PPGLTexture> mEyeTextures;

@@ -1014,6 +1014,15 @@ void PPCustomShaderInstance::SetTextures(PPRenderState *renderstate)
 	while (it.NextPair(pair))
 	{
 		FString name = pair->Value;
+		
+		// Check for special texture names
+		if (name.CompareNoCase("previousframe") == 0)
+		{
+			renderstate->SetInputPreviousFrame(textureIndex, PPFilterMode::Linear);
+			textureIndex++;
+			continue;
+		}
+		
 		auto gtex = TexMan.GetGameTexture(TexMan.CheckForTexture(name.GetChars(), ETextureType::Any), true);
 		if (gtex && gtex->isValid())
 		{

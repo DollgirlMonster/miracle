@@ -40,8 +40,10 @@ public:
 	static const int NumPipelineImages = 2;
 	VkTextureImage PipelineDepthStencil;
 	VkTextureImage PipelineImage[NumPipelineImages];
+	VkTextureImage PreviousFrameImage;
 
 	VulkanFramebuffer* GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, WhichDepthStencil stencilTest, int& framebufferWidth, int& framebufferHeight);
+	void SaveCurrentAsPrevious(int currentImage);
 
 private:
 	void CreatePipelineDepthStencil(int width, int height);
