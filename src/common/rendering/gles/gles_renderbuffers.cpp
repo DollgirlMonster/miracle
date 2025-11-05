@@ -65,6 +65,7 @@ namespace OpenGLESRenderer
 		DeleteFrameBuffer(mSceneFB);
 		DeleteRenderBuffer(mSceneDepthStencilBuf);
 		DeleteRenderBuffer(mSceneStencilBuf);
+		DeleteTexture(mPreviousFrameTexture);
 	}
 
 	void FGLRenderBuffers::DeleteTexture(PPGLTexture& tex)
@@ -161,6 +162,7 @@ namespace OpenGLESRenderer
 	void FGLRenderBuffers::CreatePipeline(int width, int height)
 	{
 		mSceneTex = Create2DTexture("PipelineTexture", GL_RGBA, width, height);
+		mPreviousFrameTexture = Create2DTexture("PreviousFrameTexture", GL_RGBA, width, height);
 	}
 
 
@@ -414,6 +416,34 @@ namespace OpenGLESRenderer
 	void FGLRenderBuffers::BindOutputFB()
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	//==========================================================================
+	//
+	// Binds the previous frame texture
+	//
+	//==========================================================================
+
+	void FGLRenderBuffers::BindPreviousTexture(int index, int filter, int wrap)
+	{
+		mPreviousFrameTexture.Bind(index, filter, wrap);
+	}
+
+	//==========================================================================
+	//
+	// Saves the current frame buffer to the previous frame texture
+	//
+	//==========================================================================
+
+	void FGLRenderBuffers::SaveCurrentAsPrevious()
+	{
+		if (!mPreviousFrameTexture || !mSceneTex)
+			return;
+
+		// In GLES, we need to use framebuffer blitting or texture copy
+		// Since glCopyImageSubData may not be available, use glCopyTexSubImage2D
+		glBindTexture(GL_TEXTURE_2D, mPreviousFrameTexture.handle);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, mWidth, mHeight);
 	}
 
 	//==========================================================================
