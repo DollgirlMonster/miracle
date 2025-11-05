@@ -122,6 +122,7 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 		PipelineImage[i].Reset(fb);
 	}
 	PipelineDepthStencil.Reset(fb);
+	PreviousFrameImage.Reset(fb);
 
 	CreatePipelineDepthStencil(width, height);
 
@@ -143,6 +144,22 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 
 		barrier.AddImage(&PipelineImage[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
 	}
+
+	// Create previous frame texture
+	PreviousFrameImage.Image = ImageBuilder()
+		.Size(width, height)
+		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
+		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+		.DebugName("VkRenderBuffers.PreviousFrameImage")
+		.Create(fb->device.get());
+
+	PreviousFrameImage.View = ImageViewBuilder()
+		.Image(PreviousFrameImage.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
+		.DebugName("VkRenderBuffers.PreviousFrameView")
+		.Create(fb->device.get());
+
+	barrier.AddImage(&PreviousFrameImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
+
 	barrier.Execute(fb->GetCommands()->GetDrawCommands());
 }
 
@@ -302,4 +319,36 @@ VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, co
 	framebufferWidth = w;
 	framebufferHeight = h;
 	return framebuffer.get();
+}
+
+void VkRenderBuffers::SaveCurrentAsPrevious(int currentImage)
+{
+	if (!PreviousFrameImage.Image || !PipelineImage[currentImage].Image)
+		return;
+
+	VkImageTransition barrier;
+	barrier.AddImage(&PipelineImage[currentImage], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
+	barrier.AddImage(&PreviousFrameImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, false);
+	barrier.Execute(fb->GetCommands()->GetDrawCommands());
+
+	// Copy current frame to previous frame texture
+	VkImageCopy region = {};
+	region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.srcSubresource.layerCount = 1;
+	region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.dstSubresource.layerCount = 1;
+	region.extent.width = mWidth;
+	region.extent.height = mHeight;
+	region.extent.depth = 1;
+
+	auto cmdbuf = fb->GetCommands()->GetDrawCommands();
+	cmdbuf->copyImage(
+		PipelineImage[currentImage].Image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		PreviousFrameImage.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		1, &region);
+
+	VkImageTransition restoreBarrier;
+	restoreBarrier.AddImage(&PipelineImage[currentImage], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
+	restoreBarrier.AddImage(&PreviousFrameImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+	restoreBarrier.Execute(fb->GetCommands()->GetDrawCommands());
 }

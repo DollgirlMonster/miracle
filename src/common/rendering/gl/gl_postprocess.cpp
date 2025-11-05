@@ -63,6 +63,9 @@ void FGLRenderer::PostProcessScene(int fixedcm, float flash, const std::function
 	mBuffers->BindCurrentFB();
 	if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D();
 	hw_postprocess.Pass2(&renderstate, fixedcm, flash, sceneWidth, sceneHeight);
+	
+	// Save current frame for use in next frame's shaders
+	mBuffers->SaveCurrentAsPrevious();
 }
 
 //-----------------------------------------------------------------------------
