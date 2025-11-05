@@ -75,6 +75,9 @@ void VkPostprocess::PostProcessScene(int fixedcm, float flash, const std::functi
 	SetActiveRenderTarget();
 	afterBloomDrawEndScene2D();
 	hw_postprocess.Pass2(&renderstate, fixedcm, flash, sceneWidth, sceneHeight);
+	
+	// Save current frame for use in next frame's shaders
+	fb->GetBuffers()->SaveCurrentAsPrevious(mCurrentPipelineImage);
 }
 
 void VkPostprocess::BlitSceneToPostprocess()
