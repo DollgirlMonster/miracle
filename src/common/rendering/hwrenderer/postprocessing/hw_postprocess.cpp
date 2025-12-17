@@ -1015,10 +1015,11 @@ void PPCustomShaderInstance::SetTextures(PPRenderState *renderstate)
 	{
 		FString name = pair->Value;
 		
-		// Check for special texture names
+		// Check for special "previousframe" texture
 		if (name.CompareNoCase("previousframe") == 0)
 		{
-			renderstate->SetInputPreviousFrame(textureIndex, PPFilterMode::Linear);
+			// Bind the previous frame texture for temporal effects
+			renderstate->SetInputPrevious(textureIndex, PPFilterMode::Linear);
 			textureIndex++;
 			continue;
 		}

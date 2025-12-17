@@ -85,11 +85,13 @@ void VkTextureManager::RemovePPTexture(VkPPTexture* texture)
 
 VkTextureImage* VkTextureManager::GetTexture(const PPTextureType& type, PPTexture* pptexture)
 {
-	if (type == PPTextureType::CurrentPipelineTexture || type == PPTextureType::NextPipelineTexture)
+	if (type == PPTextureType::CurrentPipelineTexture || type == PPTextureType::NextPipelineTexture || type == PPTextureType::PreviousPipelineTexture)
 	{
 		int idx = fb->GetPostprocess()->GetCurrentPipelineImage();
 		if (type == PPTextureType::NextPipelineTexture)
 			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
+		// For PreviousPipelineTexture, use the current index (what was just rendered)
+		// This is the same as CurrentPipelineTexture for temporal effects
 
 		return &fb->GetBuffers()->PipelineImage[idx];
 	}

@@ -735,6 +735,20 @@ void FGLRenderBuffers::BindCurrentTexture(int index, int filter, int wrap)
 
 //==========================================================================
 //
+// Binds the previous frame texture (for temporal effects)
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindPreviousTexture(int index, int filter, int wrap)
+{
+	// Previous frame is stored in the "next" buffer (the one we're about to overwrite)
+	// because it contains the output from the previous frame before we render the new one
+	int prevIndex = (mCurrentPipelineTexture + 1) % NumPipelineTextures;
+	mPipelineTexture[prevIndex].Bind(index, filter, wrap);
+}
+
+//==========================================================================
+//
 // Makes the frame buffer for the current texture active 
 //
 //==========================================================================
@@ -907,6 +921,10 @@ void GLPPRenderState::Draw()
 
 		case PPTextureType::NextPipelineTexture:
 			I_FatalError("PPTextureType::NextPipelineTexture not allowed as input\n");
+			break;
+
+		case PPTextureType::PreviousPipelineTexture:
+			buffers->BindPreviousTexture(index, filter, wrap);
 			break;
 
 		case PPTextureType::PPTexture:

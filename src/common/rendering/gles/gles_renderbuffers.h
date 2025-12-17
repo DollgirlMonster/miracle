@@ -96,6 +96,7 @@ public:
 
 
 	void BindCurrentTexture(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE);
+	void BindPreviousTexture(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE);
 	void BindCurrentFB();
 	void BindNextFB();
 	void NextTexture();

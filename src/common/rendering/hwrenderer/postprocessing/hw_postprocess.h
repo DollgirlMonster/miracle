@@ -28,7 +28,7 @@ enum class ETonemapMode : uint8_t
 
 enum class PPFilterMode { Nearest, Linear };
 enum class PPWrapMode { Clamp, Repeat };
-enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth, SwapChain, ShadowMap, PreviousPipelineTexture };
+enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PreviousPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth, SwapChain, ShadowMap };
 
 class PPTextureInput
 {
@@ -122,6 +122,11 @@ public:
 	void SetInputCurrent(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
 	{
 		SetInputSpecialType(index, PPTextureType::CurrentPipelineTexture, filter, wrap);
+	}
+
+	void SetInputPrevious(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
+	{
+		SetInputSpecialType(index, PPTextureType::PreviousPipelineTexture, filter, wrap);
 	}
 
 	void SetInputSceneColor(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)

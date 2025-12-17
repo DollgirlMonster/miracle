@@ -396,6 +396,18 @@ namespace OpenGLESRenderer
 
 	//==========================================================================
 	//
+	// Binds the previous frame texture (for temporal effects)
+	// GLES backend doesn't have pipeline texture system, so just bind current
+	//
+	//==========================================================================
+
+	void FGLRenderBuffers::BindPreviousTexture(int index, int filter, int wrap)
+	{
+		mSceneTex.Bind(index, filter, wrap);
+	}
+
+	//==========================================================================
+	//
 	// Makes the frame buffer for the current texture active 
 	//
 	//==========================================================================
