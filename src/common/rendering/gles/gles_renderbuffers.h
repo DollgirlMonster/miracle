@@ -100,8 +100,6 @@ public:
 	void BindCurrentFB();
 	void BindNextFB();
 	void NextTexture();
-	void BindPreviousTexture(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE);
-	void SaveCurrentAsPrevious();
 
 	void BindOutputFB();
 

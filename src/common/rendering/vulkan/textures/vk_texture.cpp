@@ -90,8 +90,9 @@ VkTextureImage* VkTextureManager::GetTexture(const PPTextureType& type, PPTextur
 		int idx = fb->GetPostprocess()->GetCurrentPipelineImage();
 		if (type == PPTextureType::NextPipelineTexture)
 			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
-		// For PreviousPipelineTexture, use the current index (what was just rendered)
-		// This is the same as CurrentPipelineTexture for temporal effects
+		else if (type == PPTextureType::PreviousPipelineTexture)
+			// Previous frame is in the "next" buffer (contains last frame's output)
+			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
 
 		return &fb->GetBuffers()->PipelineImage[idx];
 	}
@@ -115,10 +116,6 @@ VkTextureImage* VkTextureManager::GetTexture(const PPTextureType& type, PPTextur
 	else if (type == PPTextureType::SceneDepth)
 	{
 		return &fb->GetBuffers()->SceneDepthStencil;
-	}
-	else if (type == PPTextureType::PreviousPipelineTexture)
-	{
-		return &fb->GetBuffers()->PreviousFrameImage;
 	}
 	else if (type == PPTextureType::ShadowMap)
 	{

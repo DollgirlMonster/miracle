@@ -432,18 +432,7 @@ namespace OpenGLESRenderer
 
 	//==========================================================================
 	//
-	// Binds the previous frame texture
-	//
-	//==========================================================================
-
-	void FGLRenderBuffers::BindPreviousTexture(int index, int filter, int wrap)
-	{
-		mPreviousFrameTexture.Bind(index, filter, wrap);
-	}
-
-	//==========================================================================
-	//
-	// Saves the current frame buffer to the previous frame texture
+	// Saves the current frame buffer to the previous frame texture (GLES stub)
 	//
 	//==========================================================================
 

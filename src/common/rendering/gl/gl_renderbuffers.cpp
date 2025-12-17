@@ -783,36 +783,6 @@ void FGLRenderBuffers::NextTexture()
 
 //==========================================================================
 //
-// Binds the previous frame texture
-//
-//==========================================================================
-
-void FGLRenderBuffers::BindPreviousTexture(int index, int filter, int wrap)
-{
-	mPreviousFrameTexture.Bind(index, filter, wrap);
-}
-
-//==========================================================================
-//
-// Saves the current frame buffer to the previous frame texture
-//
-//==========================================================================
-
-void FGLRenderBuffers::SaveCurrentAsPrevious()
-{
-	if (!mPreviousFrameTexture || !mPipelineTexture[mCurrentPipelineTexture])
-		return;
-
-	// Copy current framebuffer to previous frame texture
-	glCopyImageSubData(
-		mPipelineTexture[mCurrentPipelineTexture].handle, GL_TEXTURE_2D, 0, 0, 0, 0,
-		mPreviousFrameTexture.handle, GL_TEXTURE_2D, 0, 0, 0, 0,
-		mWidth, mHeight, 1
-	);
-}
-
-//==========================================================================
-//
 // Makes the screen frame buffer active
 //
 //==========================================================================
@@ -945,10 +915,6 @@ void GLPPRenderState::Draw()
 
 		case PPTextureType::SceneDepth:
 			buffers->BindSceneDepthTexture(index);
-			break;
-
-		case PPTextureType::PreviousPipelineTexture:
-			buffers->BindPreviousTexture(index, filter, wrap);
 			break;
 		}
 	}
