@@ -123,7 +123,7 @@ void InitDoomFonts()
 			IntermissionFont = BigFont;
 		}
 	}
-	// This can only happen if gzdoom.pk3 is corrupted. ConFont should always be present.
+	// This can only happen if uzdoom.pk3 is corrupted. ConFont should always be present.
 	if (ConFont == nullptr)
 	{
 		I_FatalError("Console font not found.");

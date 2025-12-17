@@ -789,12 +789,28 @@ void FGLRenderBuffers::SaveCurrentAsPrevious()
 	if (!mPreviousFrameTexture || !mPipelineTexture[mCurrentPipelineTexture])
 		return;
 
-	// Copy current framebuffer to previous frame texture
-	glCopyImageSubData(
-		mPipelineTexture[mCurrentPipelineTexture].handle, GL_TEXTURE_2D, 0, 0, 0, 0,
-		mPreviousFrameTexture.handle, GL_TEXTURE_2D, 0, 0, 0, 0,
-		mWidth, mHeight, 1
-	);
+	// Prefer glCopyImageSubData if available (OpenGL 4.3+)
+	if (_ptrc_glCopyImageSubData)
+	{
+		glCopyImageSubData(
+			mPipelineTexture[mCurrentPipelineTexture].handle, GL_TEXTURE_2D, 0, 0, 0, 0,
+			mPreviousFrameTexture.handle, GL_TEXTURE_2D, 0, 0, 0, 0,
+			mWidth, mHeight, 1
+		);
+	}
+	else
+	{
+		// Fallback for OpenGL < 4.3 (e.g., macOS)
+		// Bind the current pipeline texture as a framebuffer and copy to previous frame texture
+		GLint oldFBO;
+		glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldFBO);
+		
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, mPipelineFB[mCurrentPipelineTexture].handle);
+		glBindTexture(GL_TEXTURE_2D, mPreviousFrameTexture.handle);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, mWidth, mHeight);
+		
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, oldFBO);
+	}
 }
 
 //==========================================================================

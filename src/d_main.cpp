@@ -3770,7 +3770,7 @@ static int D_DoomMain_Internal (void)
 
 	D_DoomInit();
 	
-	// [RH] Make sure zdoom.pk3 is always loaded,
+	// [RH] Make sure uzdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
 	wad = BaseFileSearch(BASEWAD, NULL, true, GameConfig);
 	if (wad == NULL)
