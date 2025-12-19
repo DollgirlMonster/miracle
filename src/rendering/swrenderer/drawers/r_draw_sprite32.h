@@ -29,10 +29,11 @@ namespace swrenderer
 {
 	namespace DrawSprite32TModes
 	{
-		enum class SpriteBlendModes { Copy, Opaque, Shaded, AddClampShaded, AddClamp, SubClamp, RevSubClamp };
+		enum class SpriteBlendModes { Copy, Opaque, Shaded, AddClampShaded, AddClamp, SubClamp, RevSubClamp, Colorized };
 		struct CopySprite { static const int Mode = (int)SpriteBlendModes::Copy; };
 		struct OpaqueSprite { static const int Mode = (int)SpriteBlendModes::Opaque; };
 		struct ShadedSprite { static const int Mode = (int)SpriteBlendModes::Shaded; };
+		struct ColorizedSprite { static const int Mode = (int)SpriteBlendModes::Colorized; };
 		struct AddClampShadedSprite { static const int Mode = (int)SpriteBlendModes::AddClampShaded; };
 		struct AddClampSprite { static const int Mode = (int)SpriteBlendModes::AddClamp; };
 		struct SubClampSprite { static const int Mode = (int)SpriteBlendModes::SubClamp; };
@@ -46,10 +47,11 @@ namespace swrenderer
 		struct SimpleShade { static const int Mode = (int)ShadeMode::Simple; };
 		struct AdvancedShade { static const int Mode = (int)ShadeMode::Advanced; };
 
-		enum class SpriteSamplers { Texture, Fill, Shaded, Translated };
+		enum class SpriteSamplers { Texture, Fill, Shaded, Translated, Colorized };
 		struct TextureSampler { static const int Mode = (int)SpriteSamplers::Texture; };
 		struct FillSampler { static const int Mode = (int)SpriteSamplers::Fill; };
 		struct ShadedSampler { static const int Mode = (int)SpriteSamplers::Shaded; };
+		struct ColorizedSampler { static const int Mode = (int)SpriteSamplers::Colorized; };
 		struct TranslatedSampler { static const int Mode = (int)SpriteSamplers::Translated; };
 	}
 
@@ -105,7 +107,7 @@ namespace swrenderer
 			const uint8_t *colormap;
 			const uint32_t *translation;
 
-			if (SamplerT::Mode == (int)SpriteSamplers::Shaded || SamplerT::Mode == (int)SpriteSamplers::Translated)
+			if (SamplerT::Mode == (int)SpriteSamplers::Shaded || SamplerT::Mode == (int)SpriteSamplers::Translated || SamplerT::Mode == (int)SpriteSamplers::Colorized)
 			{
 				source = (const uint32_t*)args.TexturePixels();
 				source2 = nullptr;
@@ -219,6 +221,46 @@ namespace swrenderer
 			{
 				return color;
 			}
+			else if (SamplerT::Mode == (int)SpriteSamplers::Colorized)
+			{
+				// Read texture pixel for brightness
+				int sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
+				uint32_t texel = source[sample_index];
+				
+				// Get texture brightness (luminance)
+				uint32_t texR = RPART(texel);
+				uint32_t texG = GPART(texel);
+				uint32_t texB = BPART(texel);
+				uint32_t texA = APART(texel);
+				uint32_t brightness = (texR * 77 + texG * 143 + texB * 37) >> 8;
+				
+				// Get stencil color components
+				uint32_t stencilR = RPART(color);
+				uint32_t stencilG = GPART(color);
+				uint32_t stencilB = BPART(color);
+				
+				// Find min/max for hue calculation
+				uint32_t stencilMax = std::max(std::max(stencilR, stencilG), stencilB);
+				uint32_t stencilMin = std::min(std::min(stencilR, stencilG), stencilB);
+				
+				// Apply stencil hue at texture brightness
+				uint32_t outR, outG, outB;
+				if (stencilMax == stencilMin)
+				{
+					// Grayscale stencil - keep texture brightness
+					outR = outG = outB = brightness;
+				}
+				else
+				{
+					// Apply stencil hue at texture brightness
+					uint32_t delta = stencilMax - stencilMin;
+					outR = ((stencilR - stencilMin) * brightness) / delta;
+					outG = ((stencilG - stencilMin) * brightness) / delta;
+					outB = ((stencilB - stencilMin) * brightness) / delta;
+				}
+				
+				return (texA << 24) | (outR << 16) | (outG << 8) | outB;
+			}
 			else if (SamplerT::Mode == (int)SpriteSamplers::Translated)
 			{
 				const uint8_t *sourcepal = (const uint8_t *)source;
@@ -328,6 +370,19 @@ namespace swrenderer
 				outcolor.a = 255;
 				return outcolor;
 			}
+			else if (BlendT::Mode == (int)SpriteBlendModes::Colorized)
+			{
+				uint32_t alpha = APART(ifgcolor);
+				alpha += alpha >> 7; // 255->256
+				uint32_t inv_alpha = 256 - alpha;
+
+				BgraColor outcolor;
+				outcolor.r = (fgcolor.r * alpha + bgcolor.r * inv_alpha) >> 8;
+				outcolor.g = (fgcolor.g * alpha + bgcolor.g * inv_alpha) >> 8;
+				outcolor.b = (fgcolor.b * alpha + bgcolor.b * inv_alpha) >> 8;
+				outcolor.a = 255;
+				return outcolor;
+			}
 			else if (BlendT::Mode == (int)SpriteBlendModes::AddClampShaded)
 			{
 				uint32_t alpha = ifgshade;
@@ -392,6 +447,7 @@ namespace swrenderer
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::FillSampler> FillSpriteRevSubClamp32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::ShadedSprite, DrawSprite32TModes::ShadedSampler> DrawSpriteShaded32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::ColorizedSprite, DrawSprite32TModes::ColorizedSampler> DrawSpriteColorized32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampShadedSprite, DrawSprite32TModes::ShadedSampler> DrawSpriteAddClampShaded32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslated32Command;

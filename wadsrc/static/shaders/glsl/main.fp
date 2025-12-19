@@ -220,6 +220,36 @@ vec4 getTexel(vec2 st)
 		case 7: //TM_FOGLAYER 
 			return texel;
 
+		case 8: // TM_COLORIZED
+			// Calculate texture brightness (luminance)
+			float brightness = grayscale(texel);
+			
+			// Get stencil color from uObjectColor
+			vec3 stencil = uObjectColor.rgb;
+			
+			// Find min/max for hue calculation
+			float stencilMax = max(max(stencil.r, stencil.g), stencil.b);
+			float stencilMin = min(min(stencil.r, stencil.g), stencil.b);
+			float delta = stencilMax - stencilMin;
+			
+			vec3 outColor;
+			if (delta < 0.001)
+			{
+				// Grayscale stencil or very close to it - keep texture brightness
+				outColor = vec3(brightness);
+			}
+			else
+			{
+				// Apply stencil hue at texture brightness
+				// Normalize the stencil color to the 0-1 range based on its saturation
+				vec3 normalizedStencil = (stencil - stencilMin) / delta;
+				// Scale by brightness to get final color
+				outColor = normalizedStencil * brightness;
+			}
+			
+			// Keep original alpha
+			texel.rgb = outColor;
+		break;
 	}
 
 	if ((uTextureMode & TEXF_ClampY) != 0)

@@ -367,7 +367,15 @@ public:
 		}
 		else if (style.Flags & STYLEF_ColorIsFixed)
 		{
-			SetTextureMode(TM_STENCIL);
+			// Check if this is Colorized style using the unique flag
+			if (style.Flags & STYLEF_Colorized)
+			{
+				SetTextureMode(TM_COLORIZED);
+			}
+			else
+			{
+				SetTextureMode(TM_STENCIL);
+			}
 		}
 		else if (style.Flags & STYLEF_InvertSource)
 		{
