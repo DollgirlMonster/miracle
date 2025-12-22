@@ -232,7 +232,7 @@ namespace swrenderer
 				uint32_t texG = GPART(texel);
 				uint32_t texB = BPART(texel);
 				uint32_t texA = APART(texel);
-				uint32_t brightness = (texR * 77 + texG * 143 + texB * 37) >> 8;
+				uint32_t brightness = ((texR * 77 + texG * 143 + texB * 37) >> 8) * 3 / 2;
 				
 				// Get stencil color components
 				uint32_t stencilR = RPART(color);

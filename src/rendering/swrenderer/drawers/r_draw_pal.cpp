@@ -1289,7 +1289,7 @@ namespace swrenderer
 			const PalEntry& texel = palette[texIdx];
 			
 			// Calculate texture brightness (luminance)
-			int brightness = (texel.r * 77 + texel.g * 143 + texel.b * 37) >> 8;
+			int brightness = ((texel.r * 77 + texel.g * 143 + texel.b * 37) >> 8) * 3 / 2;
 			
 			int outR, outG, outB;
 			if (stencilMax == stencilMin)

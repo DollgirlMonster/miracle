@@ -367,8 +367,8 @@ public:
 		}
 		else if (style.Flags & STYLEF_ColorIsFixed)
 		{
-			// Check if this is Colorized style using the unique flag
-			if (style.Flags & STYLEF_Colorized)
+			// Check if this is Colorized style (ColorIsFixed but not RedIsAlpha)
+			if (style == LegacyRenderStyles[STYLE_Colorized])
 			{
 				SetTextureMode(TM_COLORIZED);
 			}

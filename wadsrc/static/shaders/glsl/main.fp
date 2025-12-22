@@ -222,7 +222,7 @@ vec4 getTexel(vec2 st)
 
 		case 8: // TM_COLORIZED
 			// Calculate texture brightness (luminance)
-			float brightness = grayscale(texel);
+			float brightness = grayscale(texel) * 1.5;
 			
 			// Get stencil color from uObjectColor
 			vec3 stencil = uObjectColor.rgb;
