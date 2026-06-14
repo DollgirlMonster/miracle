@@ -414,6 +414,14 @@ else()
 endif()
 
 # ZMUSIC
+# On macOS, statically link libsndfile so OGG/WAV sounds work without
+# requiring libsndfile.1.dylib to be present in the app bundle or
+# a non-standard library path (e.g. /opt/homebrew/lib).
+# This mirrors the DYN_OPENAL=OFF approach already used for macOS.
+if( APPLE )
+	set( DYN_SNDFILE OFF CACHE BOOL "Dynamically load libsndfile" FORCE )
+endif()
+
 if( ZMUSIC_FOUND AND NOT FORCE_INTERNAL_ZMUSIC )
 	message( STATUS "Using system zmusic library, includes found at ${ZMUSIC_INCLUDE_DIR}" )
 	set( ZMUSIC_SYSTEM_INSTALL TRUE )
