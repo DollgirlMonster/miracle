@@ -124,6 +124,9 @@ public:
 	// Returns position of sound on this channel, in samples.
 	virtual unsigned int GetPosition(FISoundChannel *chan) = 0;
 
+	// Sets position of sound on this channel, in samples.
+	virtual void SetPosition(FISoundChannel *chan, unsigned int pos) = 0;
+
 	// Gets a channel's audibility (real volume).
 	virtual float GetAudibility(FISoundChannel *chan) = 0;
 

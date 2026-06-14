@@ -195,6 +195,11 @@ public:
 		return 0;
 	}
 
+	// Sets position of sound on this channel, in samples.
+	void SetPosition(FISoundChannel *chan, unsigned int pos)
+	{
+	}
+
 	// Gets a channel's audibility (real volume).
 	float GetAudibility(FISoundChannel *chan)
 	{

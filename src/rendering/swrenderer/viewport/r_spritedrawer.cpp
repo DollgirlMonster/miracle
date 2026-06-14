@@ -513,6 +513,14 @@ namespace swrenderer
 			}
 			return true;
 		}
+		else if (style == LegacyRenderStyles[STYLE_Colorized])
+		{
+			// Colorized: Use texture alpha for transparency, texture RGB for brightness, stencil color for hue
+			colfunc = &SWPixelFormatDrawers::DrawColorizedColumn;
+			drawer_needs_pal_input = false; // We need full RGBA texture data
+			dc_color_bgra = color;
+			return true;
+		}
 
 		fglevel = GetAlpha(style.SrcAlpha, alpha);
 		bglevel = GetAlpha(style.DestAlpha, alpha);

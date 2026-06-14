@@ -169,6 +169,11 @@ namespace swrenderer
 		DrawSpriteShaded32Command::DrawColumn(args);
 	}
 
+	void SWTruecolorDrawers::DrawColorizedColumn(const SpriteDrawerArgs &args)
+	{
+		DrawSpriteColorized32Command::DrawColumn(args);
+	}
+
 	void SWTruecolorDrawers::DrawAddClampShadedColumn(const SpriteDrawerArgs &args)
 	{
 		DrawSpriteAddClampShaded32Command::DrawColumn(args);

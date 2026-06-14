@@ -1256,6 +1256,65 @@ namespace swrenderer
 		}
 	}
 
+	void SWPalDrawers::DrawColorizedColumn(const SpriteDrawerArgs& args)
+	{
+		// Colorized: Use texture alpha for transparency, texture RGB for brightness, stencil color for hue
+		// For PAL renderer, we need to work in RGB space since we need texture RGB values
+		int count = args.Count();
+		if (count <= 0)
+			return;
+
+		uint8_t* dest = args.Dest();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
+
+		const uint8_t *source = args.TexturePixels();
+		const PalEntry *palette = GPalette.BaseColors;
+		int stencilColor = args.SolidColor();
+		
+		// Get stencil color RGB
+		int stencilR = palette[stencilColor].r;
+		int stencilG = palette[stencilColor].g;
+		int stencilB = palette[stencilColor].b;
+		
+		// Find min/max for hue calculation
+		int stencilMax = std::max(std::max(stencilR, stencilG), stencilB);
+		int stencilMin = std::min(std::min(stencilR, stencilG), stencilB);
+
+		do
+		{
+			uint8_t texIdx = source[frac >> FRACBITS];
+			const PalEntry& texel = palette[texIdx];
+			
+			// Calculate texture brightness (luminance)
+			int brightness = ((texel.r * 77 + texel.g * 143 + texel.b * 37) >> 8) * 3 / 2;
+			
+			int outR, outG, outB;
+			if (stencilMax == stencilMin)
+			{
+				// Grayscale stencil - keep texture brightness
+				outR = outG = outB = brightness;
+			}
+			else
+			{
+				// Apply stencil hue at texture brightness
+				int delta = stencilMax - stencilMin;
+				outR = ((stencilR - stencilMin) * brightness) / delta;
+				outG = ((stencilG - stencilMin) * brightness) / delta;
+				outB = ((stencilB - stencilMin) * brightness) / delta;
+			}
+			
+			// Blend with destination (using texture alpha - for PAL we assume opaque)
+			// For simple PAL version, just write the color
+			*dest = RGB256k.RGB[clamp(outR >> 2, 0, 63)][clamp(outG >> 2, 0, 63)][clamp(outB >> 2, 0, 63)];
+
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+
 	void SWPalDrawers::DrawAddClampShadedColumn(const SpriteDrawerArgs& args)
 	{
 		int count = args.Count();

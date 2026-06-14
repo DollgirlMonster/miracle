@@ -367,7 +367,15 @@ public:
 		}
 		else if (style.Flags & STYLEF_ColorIsFixed)
 		{
-			SetTextureMode(TM_STENCIL);
+			// Check if this is Colorized style (ColorIsFixed but not RedIsAlpha)
+			if (style == LegacyRenderStyles[STYLE_Colorized])
+			{
+				SetTextureMode(TM_COLORIZED);
+			}
+			else
+			{
+				SetTextureMode(TM_STENCIL);
+			}
 		}
 		else if (style.Flags & STYLEF_InvertSource)
 		{

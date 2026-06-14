@@ -751,6 +751,28 @@ void S_ChangeActorSoundPitch(AActor *actor, int channel, double pitch)
 
 //==========================================================================
 //
+// S_SetActorSoundPosition
+//
+//==========================================================================
+
+void S_SetActorSoundPosition(AActor *actor, int channel, unsigned int position)
+{
+	soundEngine->SetSoundPosition(SOURCE_Actor, actor, channel, position);
+}
+
+//==========================================================================
+//
+// S_GetActorSoundPosition
+//
+//==========================================================================
+
+unsigned int S_GetActorSoundPosition(AActor *actor, int channel)
+{
+	return soundEngine->GetSoundPosition(SOURCE_Actor, actor, channel);
+}
+
+//==========================================================================
+//
 // S_GetSoundPlayingInfo
 //
 // Is a sound being played by a specific emitter?

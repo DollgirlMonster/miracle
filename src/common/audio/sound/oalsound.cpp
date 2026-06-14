@@ -1560,6 +1560,15 @@ unsigned int OpenALSoundRenderer::GetPosition(FISoundChannel *chan)
 	return 0;
 }
 
+void OpenALSoundRenderer::SetPosition(FISoundChannel *chan, unsigned int pos)
+{
+	if(chan == NULL || chan->SysChannel == NULL)
+		return;
+
+	alSourcei(GET_PTRID(chan->SysChannel), AL_SAMPLE_OFFSET, pos);
+	getALError();
+}
+
 
 void OpenALSoundRenderer::SetSfxPaused(bool paused, int slot)
 {

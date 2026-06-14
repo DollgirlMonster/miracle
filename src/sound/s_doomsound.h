@@ -64,6 +64,12 @@ void S_ChangeActorSoundVolume(AActor *actor, int channel, double volume);
 // Change a playing sound's pitch
 void S_ChangeActorSoundPitch(AActor *actor, int channel, double pitch);
 
+// Set a playing sound's position (in samples)
+void S_SetActorSoundPosition(AActor *actor, int channel, unsigned int position);
+
+// Get a playing sound's position (in samples)
+unsigned int S_GetActorSoundPosition(AActor *actor, int channel);
+
 // Stores/retrieves playing channel information in an archive.
 void S_SerializeSounds(FSerializer &arc);
 

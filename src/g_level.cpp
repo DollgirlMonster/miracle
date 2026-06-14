@@ -1375,7 +1375,7 @@ void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool
 	gameaction = ga_nothing;
 
 	// clear cmd building stuff
-	buttonMap.ResetButtonStates();
+	// buttonMap.ResetButtonStates();	// [DOE] Keep button states between levels
 
 	SendItemUse = nullptr;
 	SendItemDrop = nullptr;

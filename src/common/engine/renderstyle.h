@@ -52,6 +52,7 @@ enum ETexMode
 	TM_INVERTOPAQUE,	// (1-r, 1-g, 1-b, 1)
 	TM_FOGLAYER,		// (renders a fog layer in the shape of the active texture)
 	TM_FIXEDCOLORMAP = TM_FOGLAYER,	// repurposes the objectcolor uniforms to render a fixed colormap range. (Same constant because they cannot be used in the same context.
+	TM_COLORIZED,		// (stencil hue applied to texture brightness, texture alpha)
 };
 
 // Legacy render styles
@@ -66,6 +67,7 @@ enum ERenderStyle : int
 	STYLE_Translucent,		// Draw translucent
 	STYLE_Add,				// Draw additive
 	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
+	STYLE_Colorized,		// Use alpha for transparency, texture values for brightness, stencil color for hue
 	STYLE_TranslucentStencil,
 	STYLE_Shadow,
 	STYLE_Subtract,			// Actually this is 'reverse subtract' but this is what normal people would expect by 'subtract'.
