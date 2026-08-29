@@ -1,3 +1,25 @@
+/*
+** DebugExecutionManager.h
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 nikitalita
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: MIT
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #pragma once
 
 #include "GameInterfaces.h"
@@ -83,6 +105,7 @@ public:
 	static ExceptionFilter GetFilterID(const std::string &filter_string);
 	bool IsPaused() const { return m_state == DebuggerState::kPaused; }
 	private:
+	inline void _SetLastInstruction(const VMOP *pc, VMScriptFunction *func);
 	inline pauseReason CheckState(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc);
 			void ResetStepState(DebuggerState state, VMFrameStack *stack);
 			void WaitWhilePaused(pauseReason pauseReason, VMFrameStack *stack);

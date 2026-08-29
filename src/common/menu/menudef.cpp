@@ -1,36 +1,27 @@
 /*
 ** menudef.cpp
+**
 ** MENUDEF parser amd menu generation code
 **
 **---------------------------------------------------------------------------
-** Copyright 2010 Christoph Oelckers
-** All rights reserved.
 **
-** Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions
-** are met:
+** Copyright 2008-2016 Marisa Heit
+** Copyright 2010-2016 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
 **
-** 1. Redistributions of source code must retain the above copyright
-**    notice, this list of conditions and the following disclaimer.
-** 2. Redistributions in binary form must reproduce the above copyright
-**    notice, this list of conditions and the following disclaimer in the
-**    documentation and/or other materials provided with the distribution.
-** 3. The name of the author may not be used to endorse or promote products
-**    derived from this software without specific prior written permission.
+** SPDX-License-Identifier: GPL-3.0-or-later
 **
-** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: BSD-3-Clause
+**
 **---------------------------------------------------------------------------
 **
 */
+
 #include <float.h>
 
 #include "menu.h"
@@ -52,6 +43,9 @@
 #include "i_interface.h"
 
 
+
+FARG(nocustommenu, "", "", "",
+	"");
 
 bool CheckSkipGameOptionBlock(FScanner& sc);
 
@@ -630,7 +624,7 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 					{
 						if (inserting)
 						{
-							// [Player701] If we've inserted a selectable item, 
+							// [Player701] If we've inserted a selectable item,
 							// shift all following selectable items downwards
 							// NB: index has been incremented, so we're not affecting the newly inserted item here.
 							for (unsigned int i = insertIndex; i < desc->mItems.Size(); i++)
@@ -669,7 +663,7 @@ static void ParseListMenuBody(FScanner& sc, DListMenuDescriptor* desc, int inser
 	DoParseListMenuBody(sc, desc, sizecompatible, insertIndex);
 	if (!desc->mCustomSizeSet && !sizecompatible)
 	{
-		// No custom size and incompatible items, 
+		// No custom size and incompatible items,
 		// so force clean scaling for this menu
 		desc->mVirtWidth = -1;
 	}
@@ -745,7 +739,7 @@ static bool FindMatchingItem(DMenuItemBase *desc)
 static bool ReplaceMenu(FScanner &sc, DMenuDescriptor *desc)
 {
 	DMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
-	if (pOld != nullptr && *pOld != nullptr) 
+	if (pOld != nullptr && *pOld != nullptr)
 	{
 		if ((*pOld)->mProtected)
 		{
@@ -928,7 +922,7 @@ static void ParseOptionValue(FScanner &sc)
 		}
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
-	if (pOld != nullptr && *pOld != nullptr) 
+	if (pOld != nullptr && *pOld != nullptr)
 	{
 		delete *pOld;
 	}
@@ -964,7 +958,7 @@ static void ParseOptionString(FScanner &sc)
 		}
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
-	if (pOld != nullptr && *pOld != nullptr) 
+	if (pOld != nullptr && *pOld != nullptr)
 	{
 		delete *pOld;
 	}
@@ -1693,7 +1687,7 @@ void M_ParseMenuDefs()
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
-		if (Args->CheckParm("-nocustommenu")) break;
+		if (Args->CheckParm(FArg_nocustommenu)) break;
 	}
 	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;
@@ -1781,7 +1775,7 @@ void M_CreateMenus()
 	DMenuDescriptor **menu = MenuDescriptors.CheckKey("MididevicesMenu");
 	I_BuildMIDIMenuList(opt? *opt : nullptr, menu? *menu : nullptr);
 	opt = OptionValues.CheckKey(NAME_Aldevices);
-	if (opt != nullptr) 
+	if (opt != nullptr)
 	{
 		I_BuildALDeviceList(*opt);
 	}
@@ -1791,5 +1785,3 @@ void M_CreateMenus()
 		I_BuildALResamplersList(*opt);
 	}
 }
-
-

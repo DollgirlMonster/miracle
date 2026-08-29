@@ -1,3 +1,25 @@
+/*
+** BreakpointManager.h
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 nikitalita
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: MIT
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #pragma once
 #include <map>
 #include <set>
@@ -68,7 +90,7 @@ class BreakpointManager
 	// set of case-insensitive strings
 	std::map<std::string_view, BreakpointInfo, ci_less> m_nativeFunctionBreakpoints;
 	IdProvider m_idProvider;
-	int64_t m_CurrentID = 1;
+	std::atomic<int64_t> m_CurrentID = 0;
 	size_t times_seen = 0;
 
 	void ClearBreakpointsType(BreakpointInfo::Type type);

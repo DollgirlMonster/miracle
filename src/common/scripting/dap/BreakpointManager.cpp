@@ -1,4 +1,27 @@
+/*
+** BreakpointManager.cpp
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 nikitalita
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: MIT
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "BreakpointManager.h"
+#include <atomic>
 #include <cstdint>
 #include <regex>
 #include "Utilities.h"
@@ -11,14 +34,7 @@ namespace DebugServer
 
 int64_t BreakpointManager::GetBreakpointID()
 {
-	++m_CurrentID;
-	int64_t id = m_CurrentID;
-	if (id < 0)
-	{
-		m_CurrentID = 1;
-		id = m_CurrentID;
-	}
-	return id;
+	return ++m_CurrentID;
 }
 
 

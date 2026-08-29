@@ -1,3 +1,25 @@
+/*
+** PexCache.h
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 nikitalita
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: MIT
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #pragma once
 
 #include <map>
@@ -37,7 +59,6 @@ private:
 	friend class PexCache;
 	std::string archiveName;
 	std::string archivePath;
-	std::string scriptName;
 	std::string unqualifiedScriptPath;
 	std::string compiledPath;
 	std::string cachedSourceCode;
@@ -62,6 +83,8 @@ public:
 	bool HasFunctions() const;
 	bool HasFunctionLines() const;
 	void ProcessScriptFunction(const std::string &qualPath, VMFunction *vmfunc);
+
+	Binary(const std::string &scriptPath, int lump);
 };
 struct DisassemblyLine
 {
@@ -84,6 +107,7 @@ class PexCache
 {
 public:
 	using BinaryPtr = std::shared_ptr<Binary>;
+	using ConstBinaryPtr = std::shared_ptr<const Binary>;
 	using BinaryMap = std::map<int, BinaryPtr>;
 	using DisassemblyLinePtr = std::shared_ptr<DisassemblyLine>;
 	using DisassemblyMap = beneficii::range_map<void *, std::map<void *, DisassemblyLinePtr>>;
@@ -125,7 +149,9 @@ public:
 	static void PopulateFromPaths(const std::map<std::string, int> &scripts, BinaryMap &p_scripts, bool clobber = false);
 	static void ScanScriptsInContainer(int baselump, BinaryMap &m_scripts, const std::string &filter = "");
 	static BinaryPtr makeEmptyBinary(const std::string &scriptPath, int lump);
-	
+
+
+	BinaryPtr _GetBinary(const std::string &scriptPath, int lump);
 	DisassemblyMap m_disassemblyMap;
 	Binary::FunctionCodeMap m_globalCodeMap;
 	std::recursive_mutex m_scriptsMutex;

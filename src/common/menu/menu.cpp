@@ -1,33 +1,23 @@
 /*
 ** menu.cpp
+**
 ** Menu base class and global interface
 **
 **---------------------------------------------------------------------------
-** Copyright 2010 Christoph Oelckers
-** All rights reserved.
 **
-** Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions
-** are met:
+** Copyright 2009-2016 Marisa Heit
+** Copyright 2010-2016 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
 **
-** 1. Redistributions of source code must retain the above copyright
-**    notice, this list of conditions and the following disclaimer.
-** 2. Redistributions in binary form must reproduce the above copyright
-**    notice, this list of conditions and the following disclaimer in the
-**    documentation and/or other materials provided with the distribution.
-** 3. The name of the author may not be used to endorse or promote products
-**    derived from this software without specific prior written permission.
+** SPDX-License-Identifier: GPL-3.0-or-later
 **
-** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: BSD-3-Clause
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -42,6 +32,7 @@
 #include "configfile.h"
 #include "gstrings.h"
 #include "menu.h"
+#include "name.h"
 #include "vm.h"
 #include "v_video.h"
 #include "i_system.h"
@@ -64,14 +55,18 @@ CVAR (Int, m_showinputgrid, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
-CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, m_use_mouse, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, m_cleanscale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // Option Search
 CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // Tooltip
-CVAR(Bool, m_tooltip_capwidth, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, m_tooltip_small, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, m_tooltip_capratio, 4.0/3.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+}
+CVAR(Bool, m_tooltip_small, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Int, m_tooltip_lines, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 1)
@@ -284,7 +279,7 @@ IMPLEMENT_POINTERS_START(DMenu)
 	IMPLEMENT_POINTER(mParentMenu)
 IMPLEMENT_POINTERS_END
 
-DMenu::DMenu(DMenu *parent) 
+DMenu::DMenu(DMenu *parent)
 {
 	mParentMenu = parent;
 	mMouseCapture = false;
@@ -294,6 +289,7 @@ DMenu::DMenu(DMenu *parent)
 	mTooltipScrollOffset = 0.0;
 	mTooltipScrollTimer = 0.0;
 	mCurrentTooltip = "";
+	DrawTooltips = false;
 	GC::WriteBarrier(this, parent);
 }
 
@@ -634,8 +630,8 @@ DEFINE_ACTION_FUNCTION(DMenu, SetMenu)
 //
 //=============================================================================
 
-bool M_Responder (event_t *ev) 
-{ 
+bool M_Responder (event_t *ev)
+{
 	int ch = 0;
 	bool keyup = false;
 	int mkey = NUM_MKEYS;
@@ -646,7 +642,7 @@ bool M_Responder (event_t *ev)
 		return false;
 	}
 
-	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
+	if (CurrentMenu != nullptr && menuactive != MENU_Off)
 	{
 		// There are a few input sources we are interested in:
 		//
@@ -677,8 +673,48 @@ bool M_Responder (event_t *ev)
 				// do we want mouse input?
 				if (ev->subtype >= EV_GUI_FirstMouseEvent && ev->subtype <= EV_GUI_LastMouseEvent)
 				{
-						if (!m_use_mouse)
+					if (!m_use_mouse)
+					{
+						LastMousePos.HeldButtons.Clear();
+						LastMousePos.LastUpdate = -1;
+						return true;
+					}
+
+					const EGUIEvent t = static_cast<EGUIEvent>(ev->subtype);
+					if (t == EV_GUI_LButtonDown || t == EV_GUI_MButtonDown || t == EV_GUI_RButtonDown ||
+						t == EV_GUI_BackButtonDown || t == EV_GUI_FwdButtonDown)
+					{
+						if (LastMousePos.HeldButtons.Find(t) >= LastMousePos.HeldButtons.Size())
+						{
+							LastMousePos.HeldButtons.Push(t);
+						}
+					}
+					else if (t == EV_GUI_LButtonUp || t == EV_GUI_MButtonUp || t == EV_GUI_RButtonUp ||
+					         t == EV_GUI_BackButtonUp || t == EV_GUI_FwdButtonUp)
+					{
+						LastMousePos.HeldButtons.Delete(LastMousePos.HeldButtons.Find(static_cast<EGUIEvent>(ev->subtype - 1)));
+					}
+
+					// Ignore subtle mouse movements to make the menu less finnicky.
+					if (ev->subtype == EV_GUI_MouseMove)
+					{
+						static const int DormantTimer = GameTicRate * 3;
+						// If the mouse moved < 1% of the screen's height, it's probably the mouse itself bugging out.
+						const float limit = screen->GetHeight() * 0.01f;
+						if (LastMousePos.LastUpdate < 0 || LastMousePos.HeldButtons.Size() ||
+							MenuTime - LastMousePos.LastUpdate <= DormantTimer ||
+							fabs(LastMousePos.LastX - ev->data1) >= limit || fabs(LastMousePos.LastY - ev->data2) >= limit)
+						{
+							LastMousePos.LastX = ev->data1;
+							LastMousePos.LastY = ev->data2;
+						}
+						else
+						{
 							return true;
+						}
+					}
+
+					LastMousePos.LastUpdate = MenuTime;
 				}
 
 				// pass everything else on to the current menu
@@ -814,7 +850,7 @@ bool M_Responder (event_t *ev)
 			}
 			return false;
 		}
-		else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_LButtonDown && 
+		else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_LButtonDown &&
 				 ConsoleState != c_down && gamestate != GS_LEVEL && m_use_mouse)
 		{
 			M_StartControlPanel(true);
@@ -831,10 +867,10 @@ bool M_Responder (event_t *ev)
 //
 //=============================================================================
 
-void M_Ticker (void) 
+void M_Ticker (void)
 {
 	MenuTime++;
-	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
+	if (CurrentMenu != nullptr && menuactive != MENU_Off)
 	{
 		CurrentMenu->CallTicker();
 	}
@@ -873,11 +909,11 @@ void M_Ticker (void)
 //
 //=============================================================================
 
-void M_Drawer (void) 
+void M_Drawer (void)
 {
 	PalEntry fade = 0;
 
-	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
+	if (CurrentMenu != nullptr && menuactive != MENU_Off)
 	{
 		if (!CurrentMenu->DontBlur) screen->BlurScene(menuBlurAmount);
 		if (!CurrentMenu->DontDim)
@@ -950,7 +986,7 @@ void M_PreviousMenu()
 //
 //=============================================================================
 
-void M_Init (void) 
+void M_Init (void)
 {
 	try
 	{
@@ -961,7 +997,7 @@ void M_Init (void)
 	{
 		menuDelegate = nullptr;
 		err.MaybePrintMessage();
-		Printf(PRINT_NONOTIFY | PRINT_BOLD, "%s", err.stacktrace.GetChars());
+		Printf(static_cast<PrintFlag>(PRINT_NONOTIFY | PRINT_BOLD), "%s", err.stacktrace.GetChars());
 		I_FatalError("Failed to initialize menus");
 	}
 	catch (...)
@@ -979,7 +1015,7 @@ void M_Init (void)
 //
 //=============================================================================
 
-void M_EnableMenu (bool on) 
+void M_EnableMenu (bool on)
 {
 	MenuEnabled = on;
 }
@@ -1050,6 +1086,7 @@ DEFINE_FIELD(DMenu, mCurrentTooltip)
 DEFINE_FIELD(DMenu, mTooltipScrollTimer)
 DEFINE_FIELD(DMenu, mTooltipScrollOffset)
 DEFINE_FIELD(DMenu, mTooltipFont)
+DEFINE_FIELD(DMenu, DrawTooltips)
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
@@ -1124,12 +1161,18 @@ DEFINE_FIELD(DImageScrollerDescriptor, virtHeight)
 
 struct IJoystickConfig;
 // These functions are used by dynamic menu creation.
-DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, int v)
+DMenuItemBase * CreateOptionMenuItemStaticText(
+	const char *name,
+	int v,
+	FIntCVar *greycheck,
+	int greycheckVal,
+	FName greycheckMode
+)
 {
 	auto c = PClass::FindClass("OptionMenuItemStaticText");
 	auto p = c->CreateNew();
 	FString namestr = name;
-	VMValue params[] = { p, &namestr, v };
+	VMValue params[] = { p, &namestr, v, greycheck, greycheckVal, greycheckMode.GetIndex() };
 	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1146,12 +1189,19 @@ DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickCo
 	return (DMenuItemBase*)p;
 }
 
-DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center)
+DMenuItemBase * CreateOptionMenuItemSubmenu(
+	const char *label,
+	FName cmd,
+	int param,
+	FIntCVar *greycheck,
+	int greycheckVal,
+	FName greycheckMode
+)
 {
 	auto c = PClass::FindClass("OptionMenuItemSubmenu");
 	auto p = c->CreateNew();
 	FString namestr = label;
-	VMValue params[] = { p, &namestr, cmd.GetIndex(), center, false };
+	VMValue params[] = { p, &namestr, cmd.GetIndex(), param, false, greycheck, greycheckVal, greycheckMode.GetIndex() };
 	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1168,12 +1218,19 @@ DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBi
 	return (DMenuItemBase*)p;
 }
 
-DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool centered)
+DMenuItemBase * CreateOptionMenuItemCommand(
+	const char *label,
+	FName cmd,
+	bool centered,
+	FIntCVar *greycheck,
+	int greycheckVal,
+	FName greycheckMode
+)
 {
 	auto c = PClass::FindClass("OptionMenuItemCommand");
 	auto p = c->CreateNew();
 	FString namestr = label;
-	VMValue params[] = { p, &namestr, cmd.GetIndex(), centered, false };
+	VMValue params[] = { p, &namestr, cmd.GetIndex(), centered, false, greycheck, greycheckVal, greycheckMode.GetIndex() };
 	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	auto unsafe = dyn_cast<PField>(c->FindSymbol("mUnsafe", false));

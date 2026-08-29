@@ -1,3 +1,25 @@
+/*
+** StackFrameStateNode.cpp
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 nikitalita
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: MIT
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "StackFrameStateNode.h"
 
 
@@ -46,6 +68,10 @@ bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCa
 {
 	stackFrame.id = GetId();
 	dap::Source source;
+	if (!m_stackFrame->Func)
+	{
+		return false;
+	}
 	if (IsFunctionNative(m_stackFrame->Func))
 	{
 		stackFrame.name = m_stackFrame->Func->PrintableName;
@@ -61,20 +87,6 @@ bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCa
 			if (lineNumber > 0)
 			{
 				stackFrame.line = lineNumber;
-				stackFrame.column = 1;
-			}
-			else if (lineNumber == -1 && scriptFunction->LineInfoCount > 0)
-			{
-				// end of the function, get the max line number
-				int max_line = 0;
-				for (unsigned int i = 0; i < scriptFunction->LineInfoCount; i++)
-				{
-					if (scriptFunction->LineInfo[i].LineNumber > max_line)
-					{
-						max_line = scriptFunction->LineInfo[i].LineNumber;
-					}
-				}
-				stackFrame.line = max_line + 1;
 				stackFrame.column = 1;
 			}
 			stackFrame.instructionPointerReference = StringFormat("%p", m_stackFrame->PC);

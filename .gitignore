@@ -1,5 +1,5 @@
 # build artifacts
-/build*
+/*build*
 /wadsrc/*.pk3
 .flatpak-builder/
 *.AppImage
@@ -8,6 +8,10 @@ flatpak/
 uzdoom-crash.log
 fmodapi*linux/
 gitinfo.h
+wadsrc*/**/language.csv
+wadsrc*/**/language.0
+wadsrc/static/contributors.txt
+wadsrc/static/meta.xml
 
 # editor/tooling/os files
 *~
@@ -18,6 +22,7 @@ gitinfo.h
 .vscode
 .cache
 *.kate-swp
+.kate*
 *.geany
 
 # private dev files

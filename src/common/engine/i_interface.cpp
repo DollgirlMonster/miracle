@@ -1,3 +1,20 @@
+/*
+** i_interface.cpp
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2019-2025 GZDoom Maintainers and Contributors
+** Copyright 2020 Christoph Oelckers
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "i_interface.h"
 #include "st_start.h"
 #include "gamestate.h"
@@ -7,6 +24,10 @@
 #include "version.h"
 #include "m_argv.h"
 #include "m_random.h"
+
+#ifdef HAS_UPDATER
+#include "curl_loader.h"
+#endif
 
 static_assert(sizeof(void*) == 8,
 	"Only LP64/LLP64 builds are officially supported. "
@@ -44,7 +65,6 @@ CVAR(String, defaultnetargs, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, defaultnetplayers, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, defaultnethostport, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, defaultnetticdup, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, defaultnetmode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, defaultnetgamemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, defaultnetaltdm, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(String, defaultnetaddress, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -54,10 +74,22 @@ CVAR(Int, defaultnethostteam, 255, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, defaultnetjointeam, 255, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, defaultnetextratic, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(String, defaultnetsavefile, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(String, ui_colors, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Float, ui_color_mix, .35, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 EXTERN_CVAR(Bool, ui_generic)
 EXTERN_CVAR(Int, vid_preferbackend)
 EXTERN_CVAR(Bool, vid_fullscreen)
+EXTERN_CVAR(Bool, vid_vsync)
+EXTERN_CVAR(Bool, r_dynlights)
+EXTERN_CVAR(Bool, gl_light_shadowmap)
+EXTERN_CVAR(Int, ui_preferred_theme)
+
+#ifdef HAS_UPDATER
+EXTERN_CVAR(Int, updater_update_interval)
+EXTERN_CVAR(Bool, updater_auto_updates)
+EXTERN_CVAR(Bool, updater_check_updates)
+#endif
 
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 {
@@ -66,6 +98,9 @@ CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 	if (sysCallbacks.LanguageChanged) sysCallbacks.LanguageChanged(self);
 }
 
+FARG(pride, "Launcher", "Show pride colors", "",
+	 "Show pride colors in launcher.");
+
 // Some of this info has to be passed and managed from the front end since it's game-engine specific.
 FStartupSelectionInfo::FStartupSelectionInfo(const TArray<WadStuff>& wads, FArgs& args, int startFlags) : Wads(&wads), Args(&args), DefaultStartFlags(startFlags)
 {
@@ -73,6 +108,10 @@ FStartupSelectionInfo::FStartupSelectionInfo(const TArray<WadStuff>& wads, FArgs
 	DefaultLanguage = language;
 	DefaultBackend = vid_preferbackend;
 	DefaultFullscreen = vid_fullscreen;
+	DefaultVsync = vid_vsync;
+	DefaultDynLights = r_dynlights;
+	DefaultShadowmaps = gl_light_shadowmap;
+	DefaultPreferredTheme = ui_preferred_theme;
 
 	if (defaultiwad[0] != '\0')
 	{
@@ -108,7 +147,6 @@ FStartupSelectionInfo::FStartupSelectionInfo(const TArray<WadStuff>& wads, FArgs
 	DefaultNetPlayers = defaultnetplayers;
 	DefaultNetHostPort = defaultnethostport;
 	DefaultNetTicDup = defaultnetticdup;
-	DefaultNetMode = defaultnetmode;
 	DefaultNetGameMode = defaultnetgamemode;
 	DefaultNetAltDM = defaultnetaltdm;
 	DefaultNetHostTeam = defaultnethostteam;
@@ -117,6 +155,15 @@ FStartupSelectionInfo::FStartupSelectionInfo(const TArray<WadStuff>& wads, FArgs
 	DefaultNetAddress = defaultnetaddress;
 	DefaultNetJoinPort = defaultnetjoinport;
 	DefaultNetJoinTeam = defaultnetjointeam;
+
+	prideColors = Args->CheckParm(FArg_pride)? "list": ui_colors;
+	prideMix = ui_color_mix;
+
+#ifdef HAS_UPDATER
+	DefaultUpdateInterval = updater_update_interval;
+	bAutoUpdate = updater_auto_updates;
+	bCheckUpdate = updater_check_updates;
+#endif
 }
 
 // Return whatever IWAD the user selected.
@@ -131,54 +178,61 @@ int FStartupSelectionInfo::SaveInfo()
 	DefaultNetAddress.StripLeftRight();
 	DefaultNetSaveFile.StripLeftRight();
 
+#ifdef HAS_UPDATER
+	if(IsCurlLoaded())
+	{
+		updater_update_interval = DefaultUpdateInterval;
+		updater_auto_updates = bAutoUpdate;
+		updater_check_updates = bCheckUpdate;
+	}
+#endif
+
 	queryiwad = DefaultQueryIWAD;
 	language = DefaultLanguage.GetChars();
 	vid_fullscreen = DefaultFullscreen;
+	vid_vsync = DefaultVsync;
+	r_dynlights = DefaultDynLights;
+	gl_light_shadowmap = DefaultShadowmaps;
+	ui_preferred_theme = DefaultPreferredTheme;
 	if (DefaultBackend != vid_preferbackend)
 		vid_preferbackend = DefaultBackend;
 
-	if (bNetStart)
-	{
-		savenetfile = bSaveNetFile;
-		savenetargs = bSaveNetArgs;
+	savenetfile = bSaveNetFile;
+	savenetargs = bSaveNetArgs;
 
-		defaultnetiwad = (*Wads)[DefaultNetIWAD].Name.GetChars();
-		defaultnetpage = DefaultNetPage;
-		defaultnetsavefile = savenetfile ? DefaultNetSaveFile.GetChars() : "";
-		defaultnetargs = savenetargs ? DefaultNetArgs.GetChars() : "";
+	defaultnetiwad = (*Wads)[DefaultNetIWAD].Name.GetChars();
+	defaultnetpage = DefaultNetPage;
+	defaultnetsavefile = savenetfile ? DefaultNetSaveFile.GetChars() : "";
+	defaultnetargs = savenetargs ? DefaultNetArgs.GetChars() : "";
 
-		if (bHosting)
-		{
-			defaultnetplayers = DefaultNetPlayers;
-			defaultnethostport = DefaultNetHostPort;
-			defaultnetticdup = DefaultNetTicDup;
-			defaultnetmode = DefaultNetMode;
-			defaultnetgamemode = DefaultNetGameMode;
-			defaultnetaltdm = DefaultNetAltDM;
-			defaultnethostteam = DefaultNetHostTeam;
-			defaultnetextratic = DefaultNetExtraTic;
-		}
-		else
-		{
-			defaultnetaddress = DefaultNetAddress.GetChars();
-			defaultnetjoinport = DefaultNetJoinPort;
-			defaultnetjointeam = DefaultNetJoinTeam;
-		}
+	defaultnetplayers = DefaultNetPlayers;
+	defaultnethostport = DefaultNetHostPort;
+	defaultnetticdup = DefaultNetTicDup;
+	defaultnetgamemode = DefaultNetGameMode;
+	defaultnetaltdm = DefaultNetAltDM;
+	defaultnethostteam = DefaultNetHostTeam;
+	defaultnetextratic = DefaultNetExtraTic;
 
-		if (!DefaultNetArgs.IsEmpty())
-			Args->AppendArgsString(DefaultNetArgs);
-		if (!AdditionalNetArgs.IsEmpty())
-			Args->AppendArgsString(AdditionalNetArgs);
-
-		return DefaultNetIWAD;
-	}
+	defaultnetaddress = DefaultNetAddress.GetChars();
+	defaultnetjoinport = DefaultNetJoinPort;
+	defaultnetjointeam = DefaultNetJoinTeam;
 
 	defaultiwad = (*Wads)[DefaultIWAD].Name.GetChars();
 	saveargs = bSaveArgs;
 	defaultargs = saveargs ? DefaultArgs.GetChars() : "";
 
+	if (bNetStart)
+	{
+		if (!DefaultNetArgs.IsEmpty())
+			Args->AppendRawArgsString(DefaultNetArgs);
+		if (!AdditionalNetArgs.IsEmpty())
+			Args->AppendRawArgsString(AdditionalNetArgs);
+
+		return DefaultNetIWAD;
+	}
+
 	if (!DefaultArgs.IsEmpty())
-		Args->AppendArgsString(DefaultArgs);
+		Args->AppendRawArgsString(DefaultArgs);
 
 	return DefaultIWAD;
 }

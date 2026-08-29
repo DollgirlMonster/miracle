@@ -1,3 +1,25 @@
+/*
+** RuntimeState.h
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 nikitalita
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: MIT
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #pragma once
 
 #include "IdMap.h"
@@ -31,5 +53,6 @@ class RuntimeState
 
 	static void GetStackFrames(VMFrameStack *stack, std::vector<VMFrame *> &frames);
 	static bool GetStackFrames(uint32_t stackId, std::vector<VMFrame *> &frames);
+	static int GetStackFrameIndex(VMFrameStack *stack, VMFrame *frame);
 };
 }

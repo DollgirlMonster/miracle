@@ -1,3 +1,25 @@
+/*
+** RuntimeState.cpp
+**
+**
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 nikitalita
+** Copyright 2025-2026 UZDoom Maintainers and Contributors
+**
+** SPDX-License-Identifier: GPL-3.0-or-later
+**
+**---------------------------------------------------------------------------
+**
+** Code written prior to 2026 is also licensed under:
+**
+** SPDX-License-Identifier: MIT
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "RuntimeState.h"
 #include "Utilities.h"
 #include "Nodes/StateNodeBase.h"
@@ -293,6 +315,25 @@ bool RuntimeState::GetStackFrames(const uint32_t stackId, std::vector<VMFrame *>
 
 	return true;
 }
+
+int RuntimeState::GetStackFrameIndex(VMFrameStack *stack, VMFrame *p_frame)
+{
+	if (!stack->HasFrames())
+	{
+		return -1;
+	}
+	int i = 0;
+	for (VMFrame *frame = stack->TopFrame(); frame; frame = frame->ParentFrame)
+	{
+		if (frame == p_frame)
+		{
+			return i;
+		}
+		i++;
+	}
+	return -1;
+}
+
 void RuntimeState::Reset()
 {
 	m_paths->Clear();
