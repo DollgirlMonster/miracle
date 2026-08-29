@@ -1540,10 +1540,11 @@ if( APPLE )
 	# Update plist bundle version from gitinfo.h at build time
 	add_custom_command(TARGET zdoom POST_BUILD
 		COMMAND "${CMAKE_COMMAND}"
-			-DGITINFO_H="${CMAKE_BINARY_DIR}/gitinfo.h"
-			-DPLIST_FILE="$<TARGET_BUNDLE_DIR:zdoom>/Contents/Info.plist"
+			"-DGITINFO_H=${CMAKE_BINARY_DIR}/gitinfo.h"
+			"-DPLIST_FILE=$<TARGET_BUNDLE_DIR:zdoom>/Contents/Info.plist"
 			-P "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/UpdatePlistVersion.cmake"
 		COMMENT "Updating bundle version in Info.plist"
+		VERBATIM
 	)
 
 	# Dymanic libraries like libvulkan.dylib or libMoltenVK.dylib will be loaded by dlopen()
